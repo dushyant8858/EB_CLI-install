@@ -1,0 +1,24 @@
+https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/eb-cli3-install-linux.html
+
+python --version
+
+sudo yum install python37 -y
+
+python3 --version
+
+curl -O https://bootstrap.pypa.io/get-pip.py
+
+python3 get-pip.py --user
+
+pip --version
+
+pip install awsebcli --upgrade --user
+
+eb --version
+
+pip install awsebcli --upgrade --user
+
+
+
+
+https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/eb-cli3-install-virtualenv.html
