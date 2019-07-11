@@ -1,8 +1,8 @@
        history 
-    1  sudo yum update -y
-    2  sudo yum  install python3-pip
-    3  sudo pip3 install virtualenv
-    4  python --version 
-    5  python3 --version 
-    6  virtualenv --python=/usr/bin/python3 ~/eb-virt
-    7  history 
+    sudo yum update -y
+    sudo yum  install python3-pip -y
+    sudo pip3 install virtualenv 
+    python --version 
+    python3 --version 
+    virtualenv --python=/usr/bin/python3 ~/eb-virt
+    history 
