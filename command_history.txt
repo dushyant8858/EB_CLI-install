@@ -1,0 +1,232 @@
+1) Launched an Amazon Linux 2 AMI (HVM), SSD Volume Type - ami-0b898040803850657 (64-bit x86) / ami-0ad82a384c06c911e (64-bit Arm) with default settings.
+
+
+
+2) Installed virtual environment using the following commands:
+
+    #   history 
+    1   sudo yum update -y
+    2   sudo yum  install python3-pip -y
+    3   sudo pip3 install virtualenv 
+    4   python --version 
+    5   python3 --version 
+    6   virtualenv --python=/usr/bin/python3 ~/eb-virt
+
+
+
+
+3) Installed EB CLI
+
+    7  history 
+    8  pip3 install awsebcli --upgrade --user
+    9  sudo yum update
+
+
+
+
+4) Configured AWS CLI
+
+   12  aws configure 
+
+
+
+
+5) Followed the exact same step on the AWS document: Deploying a Django Application to Elastic Beanstalk - https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/create-deploy-python-django.html
+
+######### Create a new Django project named ebdjango ######### 
+   15  source ~/eb-virt/bin/activate
+   16  pip3 install django==2.1.1 
+   17  pip freeze
+   18  django-admin startproject ebdjango
+   19  sudo yum install tree -y
+   22  cd ebdjango/
+   23  tree 
+...
+.
+├── ebdjango
+│   ├── __init__.py
+│   ├── settings.py
+│   ├── urls.py
+│   └── wsgi.py
+└── manage.py
+...
+
+   26  python manage.py migrate
+   27  python manage.py runserver
+   28  pip freeze > requirements.txt
+   29  mkdir .ebextensions
+   30  vim .ebextensions/django.config
+   31  cat .ebextensions/django.config
+...
+option_settings:
+  aws:elasticbeanstalk:container:python:
+    WSGIPath: ebdjango/wsgi.py
+...
+
+   32  tree 
+...
+.
+├── db.sqlite3
+├── ebdjango
+│   ├── __init__.py
+│   ├── __pycache__
+│   │   ├── __init__.cpython-37.pyc
+│   │   ├── settings.cpython-37.pyc
+│   │   ├── urls.cpython-37.pyc
+│   │   └── wsgi.cpython-37.pyc
+│   ├── settings.py
+│   ├── urls.py
+│   └── wsgi.py
+├── manage.py
+└── requirements.txt
+...
+
+
+
+
+######### creating an environment and deploying Django application #########
+
+   36  eb init -p python-3.6 test-django-tutorial
+...
+Application test-django-tutorial has been created.
+...
+
+   38  eb init
+...
+Do you want to set up SSH for your instances?
+(y/n): y
+...
+
+   39  eb create django-env
+...
+2019-07-12 18:22:17    INFO    Successfully launched environment: test-django-evn
+...
+
+   41  eb status
+...
+CNAME: test-django-env.xxxxxxxx.us-east-1.elasticbeanstalk.com
+...
+
+   42  vim ebdjango/settings.py 
+   43  cat ebdjango/settings.py 
+...
+ALLOWED_HOSTS = ['test-django-env.xxxxxxxx.us-east-1.elasticbeanstalk.com']
+...
+
+   46  eb deploy --debug
+...
+2019-07-12 18:35:30    INFO    New application version was deployed to running EC2 instances.
+2019-07-12 18:35:30    INFO    Environment update completed successfully.
+...
+
+######### website is up and running health #########
+
+
+
+
+
+
+
+
+
+
+######### creating a '.ebextensions/logging.config' file to configure the permission on directory '/opt/python/log/lokmi-logs' #########
+
+   48  vim .ebextensions/logging.config
+   49  cat .ebextensions/logging.config
+...
+commands:
+  00_create_dir:
+    command: mkdir -p /opt/python/log/lokmi-logs
+  01_change_permissions:
+    command: chmod g+s /opt/python/log
+  02_change_owner:
+    command: chown wsgi:wsgi /opt/python/log/lokmi-logs
+  03_change_default_owner:
+    command: setfacl -d -m g::rw /opt/python/log
+...
+
+
+
+
+
+
+
+
+######### editing 'ebdjango/settings.py' file to configure logging #########
+
+   51  vim ebdjango/settings.py 
+   52  cat ebdjango/settings.py 
+...
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': '/opt/python/log/lokmi-logs/debug.log',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}
+...
+
+   50  eb deploy --debug 
+...
+2019-07-12 18:43:55    INFO    New application version was deployed to running EC2 instances.
+2019-07-12 18:43:55    INFO    Environment update completed successfully.
+...
+
+##############################################################
+
+
+1) ssh into eb's instance 
+
+   1  cd /opt/python/log/
+   2  ls -al 
+...
+total 16
+drwxrwxr-x 3 root wsgi 4096 Jul 12 18:21 .
+drwxr-xr-x 7 root root 4096 Jul 12 18:35 ..
+drwxr-xr-x 2 root root 4096 Jul 12 18:20 rotated
+-rw-r--r-- 1 root root  982 Jul 12 18:35 supervisord.log
+...
+
+   3  sudo yum install tree 
+
+   4  tree
+...
+.
+├── rotated
+└── supervisord.log
+...
+
+######### after new deployment #########
+
+   5  ls -al 
+...
+total 20
+drwxrwsr-x+ 4 root wsgi 4096 Jul 12 18:43 .
+drwxr-xr-x  7 root root 4096 Jul 12 18:43 ..
+drwxr-xr-x  2 wsgi wsgi 4096 Jul 12 18:43 lokmi-logs
+drwxr-xr-x  2 root root 4096 Jul 12 18:20 rotated
+-rw-r--r--  1 root root 1224 Jul 12 18:43 supervisord.log
+...
+
+   6  tree 
+...
+.
+├── lokmi-logs
+│   └── debug.log
+├── rotated
+└── supervisord.log
+...
+
+######### website is up and running health #########
