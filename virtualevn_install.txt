@@ -1,8 +1,10 @@
-       history 
+    history 
     sudo yum update -y
     sudo yum  install python3-pip -y
     sudo pip3 install virtualenv 
     python --version 
     python3 --version 
     virtualenv --python=/usr/bin/python3 ~/eb-virt
-    history 
+    source ~/eb-virt/bin/activate
+    
+    history
