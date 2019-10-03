@@ -1,7 +1,20 @@
+###### Install Virtual Environment ######
+
+    sudo yum update -y
+    sudo yum  install python3-pip -y
+    sudo pip3 install virtualenv 
+    python --version 
+    python3 --version 
+    virtualenv --python=/usr/bin/python3 ~/eb-virt
+    source ~/eb-virt/bin/activate
+
+
+##### Install AWS CLI ######
+
     sudo yum update -y
     sudo yum  install python3-pip -y
     pip3 install awscli --upgrade --user    
     python --version 
     python3 --version 
     
-    
+###### END ######
